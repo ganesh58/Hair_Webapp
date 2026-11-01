@@ -53,11 +53,6 @@ const Navbar: React.FC = () => {
             </button>
           </li>
           <li>
-            <button onClick={() => scrollToSection('pricing')} className={styles.link}>
-              Pricing
-            </button>
-          </li>
-          <li>
             <button onClick={() => scrollToSection('how-it-works')} className={styles.link}>
               How It Works
             </button>

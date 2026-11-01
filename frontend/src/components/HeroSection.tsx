@@ -54,12 +54,6 @@ const HeroSection: React.FC = () => {
                 Start Free Analysis
                 <FaArrowRight />
               </button>
-              <button
-                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
-                className="inline-flex items-center justify-center gap-2 border-2 border-gray-600 text-gray-300 px-8 py-4 rounded-xl font-semibold hover:border-green-500 hover:text-green-400 transition-all duration-300 text-lg"
-              >
-                View Pricing
-              </button>
             </div>
 
             {/* Stats */}

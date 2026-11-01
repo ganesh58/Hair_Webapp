@@ -4,7 +4,6 @@ import Navbar from '../components/Navbar';
 import SponsorsSection from '../components/SponsorsSection';
 import FeaturesSection from '../components/FeaturesSection';
 import HowItWorksSection from '../components/HowItWorksSection';
-import PaymentPlansSection from '../components/PaymentPlansSection';
 import Footer from '../components/Footer';
 
 const Home: React.FC = () => {
@@ -15,7 +14,6 @@ const Home: React.FC = () => {
       <SponsorsSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <PaymentPlansSection />
       <Footer />
     </div>
   );

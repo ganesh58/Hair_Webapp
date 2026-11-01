@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 // Middleware
 app.use(cors());
@@ -166,6 +166,10 @@ app.get('/api/analyses/:clerkId', async (req, res) => {
 // Create checkout session
 app.post('/create-checkout-session', async (req, res) => {
   const { planId, planAmount, planCurrency, clerkId } = req.body;
+
+  if (!stripe) {
+    return res.status(503).json({ error: 'Payments are not enabled' });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({

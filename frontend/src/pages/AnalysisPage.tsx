@@ -9,19 +9,17 @@ import styles from '../styles/AnalysisPageStyles';
 const AnalysisPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const [credits, setCredits] = useState<number | null>(null);
   const [analysisCount, setAnalysisCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       if (!user) return;
-      
+
       try {
         // First try to get user data
-        const userResult = await userApi.getUser(user.id);
-        setCredits(userResult.user?.credits ?? 50);
-        
+        await userApi.getUser(user.id);
+
         // Get history
         try {
           const historyResult = await analysisApi.getHistory(user.id, 100);
@@ -33,21 +31,18 @@ const AnalysisPage: React.FC = () => {
         // If user not found (404), sync/create them
         if (err.response?.status === 404) {
           try {
-            const syncResult = await userApi.syncUser({
+            await userApi.syncUser({
               clerkId: user.id,
               email: user.primaryEmailAddress?.emailAddress || '',
               name: user.fullName || user.firstName || undefined,
               imageUrl: user.imageUrl || undefined,
             });
-            setCredits(syncResult.user?.credits ?? 50);
             setAnalysisCount(0);
           } catch (syncErr) {
             console.error('Error syncing user:', syncErr);
-            setCredits(50);
           }
         } else {
           console.error('Error fetching user:', err);
-          setCredits(50);
         }
       } finally {
         setLoading(false);
@@ -88,10 +83,8 @@ const AnalysisPage: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full mb-8">
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-green-100 dark:border-green-900 text-center">
             <FaCoins className="text-3xl text-yellow-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              {loading ? '...' : credits}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Credits Left</div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">∞</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Unlimited Scans</div>
           </div>
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-green-100 dark:border-green-900 text-center">
             <FaHistory className="text-3xl text-green-500 mx-auto mb-2" />
@@ -102,8 +95,8 @@ const AnalysisPage: React.FC = () => {
           </div>
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-green-100 dark:border-green-900 text-center col-span-2 md:col-span-1">
             <FaStar className="text-3xl text-purple-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">20</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Credits per Scan</div>
+            <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">Free</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Cost per Scan</div>
           </div>
         </div>
 
@@ -133,7 +126,6 @@ const AnalysisPage: React.FC = () => {
           <button
             onClick={handleButtonClick}
             className={styles.startButton}
-            disabled={credits !== null && credits < 20}
           >
             <FaCamera className="mr-2" />
             Start Analysis
@@ -147,15 +139,6 @@ const AnalysisPage: React.FC = () => {
             View History
           </button>
         </div>
-
-        {/* Credit warning */}
-        {!loading && credits !== null && credits < 20 && (
-          <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 text-center max-w-md">
-            <p className="text-yellow-700 dark:text-yellow-300 text-sm">
-              ⚠️ You have less than 20 credits. You need at least 20 credits to perform an analysis.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

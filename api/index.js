@@ -94,31 +94,21 @@ app.post('/api/analyses', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    if (user.credits < 20) {
-      return res.status(403).json({ error: 'Insufficient credits. You need at least 20 credits.' });
-    }
-
     const topPrediction = predictions.reduce((prev, current) =>
       prev.probability > current.probability ? prev : current
     );
 
-    const [analysis] = await prisma.$transaction([
-      prisma.analysis.create({
-        data: {
-          userId: user.id,
-          imageUrl,
-          predictions,
-          topResult: topPrediction.className,
-          confidence: topPrediction.probability,
-        },
-      }),
-      prisma.user.update({
-        where: { id: user.id },
-        data: { credits: { decrement: 20 } },
-      }),
-    ]);
+    const analysis = await prisma.analysis.create({
+      data: {
+        userId: user.id,
+        imageUrl,
+        predictions,
+        topResult: topPrediction.className,
+        confidence: topPrediction.probability,
+      },
+    });
 
-    res.json({ analysis, remainingCredits: user.credits - 20 });
+    res.json({ analysis });
   } catch (error) {
     console.error('Error saving analysis:', error);
     res.status(500).json({ error: 'Failed to save analysis' });

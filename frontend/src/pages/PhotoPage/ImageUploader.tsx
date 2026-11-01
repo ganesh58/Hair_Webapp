@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import styles from '../../styles/ImageUploaderStyles';
-import UpgradeCard from '../UpgradeCard';
-import { analysisApi, userApi } from '../../services/api';
+import { analysisApi } from '../../services/api';
 import { useToast } from '../../components/Toast';
 
 interface Prediction {
@@ -68,25 +67,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 }) => {
     const { user } = useUser();
     const { showToast } = useToast();
-    const [credits, setCredits] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const [analysisSaved, setAnalysisSaved] = useState(false);
-
-    // Fetch credits from backend
-    useEffect(() => {
-        const fetchCredits = async () => {
-            if (!user) return;
-            try {
-                const result = await userApi.getUser(user.id);
-                setCredits(result.user?.credits ?? 0);
-            } catch (err) {
-                // User might not exist yet, will be created on first analysis
-                setCredits(50);
-            }
-        };
-        fetchCredits();
-    }, [user]);
 
     // Save analysis when predictions arrive and show with delay
     useEffect(() => {
@@ -98,24 +81,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             const timer = setTimeout(async () => {
                 try {
                     // Save to database
-                    const result = await analysisApi.saveAnalysis({
+                    await analysisApi.saveAnalysis({
                         clerkId: user.id,
                         imageUrl: imageSrc,
                         predictions,
                     });
-                    
-                    setCredits(result.remainingCredits);
+
                     setAnalysisSaved(true);
                     setShowResults(true);
-                    showToast('Analysis complete! 20 credits used.', 'success');
+                    showToast('Analysis complete!', 'success');
                 } catch (err: any) {
                     console.error('Error saving analysis:', err);
-                    if (err.response?.status === 403) {
-                        showToast('Insufficient credits!', 'error');
-                    } else {
-                        showToast('Analysis complete!', 'success');
-                        setShowResults(true);
-                    }
+                    showToast('Analysis complete!', 'success');
+                    setShowResults(true);
                 } finally {
                     setLoading(false);
                 }
@@ -126,11 +104,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }, [predictions, imageSrc, analysisSaved, user, showToast]);
 
     const handleFileChange = async (file: File) => {
-        if (credits < 1) {
-            showToast('No credits remaining!', 'error');
-            return;
-        }
-
         setAnalysisSaved(false);
         setShowResults(false);
         
@@ -147,10 +120,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     };
 
     const handleCameraClick = () => {
-        if (credits < 1) {
-            showToast('No credits remaining!', 'error');
-            return;
-        }
         setAnalysisSaved(false);
         setShowResults(false);
         setIsCameraView(true);
@@ -164,9 +133,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     return (
         <div className={styles.container}>
-            {credits < 1 && !showResults ? (
-                <UpgradeCard />
-            ) : (
+            {(
                 <>
                     {/* Image Display */}
                     {imageSrc ? (
@@ -186,18 +153,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     <h2 className={styles.title}>Take a Photo</h2>
                     <p className={styles.description}>We'll use this to analyze and return predictions from the AI model</p>
                     
-                    {/* Credits Display */}
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                        <span className="text-2xl">💰</span>
-                        <span className={styles.credits}>{credits} Credits Remaining</span>
-                    </div>
-
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
                         <button
                             className={styles.button}
                             onClick={handleCameraClick}
-                            disabled={credits < 1 || isAnalyzing || loading}
+                            disabled={isAnalyzing || loading}
                         >
                             📷 Use Camera
                         </button>
@@ -215,7 +176,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                             <button
                                 className={styles.button}
                                 onClick={handleInputClick}
-                                disabled={credits < 1 || isAnalyzing || loading}
+                                disabled={isAnalyzing || loading}
                             >
                                 📁 Choose from Library
                             </button>
